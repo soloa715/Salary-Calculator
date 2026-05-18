@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>מחשבון שכר | Salary Calculator</title>
+<style>
+:root {
+  --bg:#0f1117;--surface:#1a1d2e;--surface2:#222640;--border:#2d3255;
+  --primary:#6366f1;--primary-dark:#4f46e5;--primary-light:#818cf8;
+  --success:#10b981;--warning:#f59e0b;--danger:#ef4444;
+  --text:#e2e8f0;--muted:#94a3b8;--amount:#34d399;--radius:12px;--radius-sm:8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.5}
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f1117,#1a1d2e);padding:20px}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:40px 32px;width:100%;max-width:380px;text-align:center}
+.login-card .logo{font-size:48px;margin-bottom:12px}
+.login-card h1{font-size:24px;font-weight:700;color:var(--primary-light);margin-bottom:4px}
+.login-card h2{font-size:14px;color:var(--muted);font-weight:400;margin-bottom:32px}
+.form-group{margin-bottom:16px;text-align:left}
+.form-group label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:12px 14px;font-size:15px;outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus{border-color:var(--primary)}
+.form-group select option{background:var(--surface2)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn-primary{background:var(--primary);color:#fff;width:100%}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary-light)}
+.btn-sm{padding:8px 14px;font-size:13px}
+.btn-block{width:100%}
+#app{min-height:100vh;display:flex;flex-direction:column;padding-bottom:80px}
+#appHeader{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+#appHeader h1{font-size:18px;font-weight:700;color:var(--primary-light)}
+#appHeader .subtitle{font-size:12px;color:var(--muted)}
+.icon-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);padding:8px 10px;cursor:pointer;font-size:16px;transition:all .2s}
+.icon-btn:hover{color:var(--text);border-color:var(--primary)}
+#pageContent{flex:1;overflow-y:auto;padding:20px;max-width:620px;margin:0 auto;width:100%}
+#bottomNav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding:8px 0;padding-bottom:max(8px,env(safe-area-inset-bottom));z-index:200}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;font-weight:500;transition:color .2s}
+.nav-item .nav-icon{font-size:22px;line-height:1}
+.nav-item.active{color:var(--primary-light)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.card-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(min-width:480px){.stat-grid{grid-template-columns:1fr 1fr 1fr}}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.stat-card .stat-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:6px}
+.stat-card .stat-value{font-size:24px;font-weight:700}
+.stat-card .stat-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.stat-card.hi{background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(99,102,241,.05));border-color:rgba(99,102,241,.3)}
+.stat-card.hi .stat-value{color:var(--primary-light)}
+.stat-card.ok{background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(16,185,129,.05));border-color:rgba(16,185,129,.3)}
+.stat-card.ok .stat-value{color:var(--success)}
+.breakdown-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.breakdown-row:last-child{border-bottom:none}
+.breakdown-label{font-size:14px;color:var(--muted)}
+.breakdown-label small{display:block;font-size:11px;color:#3d4460;margin-top:1px}
+.breakdown-amount{font-size:15px;font-weight:600;color:var(--amount)}
+.breakdown-amount.neg{color:var(--danger)}
+.breakdown-row.total{padding-top:14px}
+.breakdown-row.total .breakdown-label{font-weight:700;color:var(--text);font-size:16px}
+.breakdown-row.total .breakdown-amount{font-size:20px}
+.shift-list{display:flex;flex-direction:column;gap:8px}
+.shift-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:border-color .2s}
+.shift-item:hover{border-color:var(--primary)}
+.shift-item.sat{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.05)}
+.shift-item.sick{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.05)}
+.shift-item.vac{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.05)}
+.shift-item.hol{border-color:rgba(168,85,247,.4);background:rgba(168,85,247,.05)}
+.shift-date{display:flex;flex-direction:column;align-items:center;min-width:44px}
+.shift-date .day-num{font-size:22px;font-weight:700;line-height:1}
+.shift-date .day-name{font-size:10px;color:var(--muted);text-transform:uppercase}
+.shift-info{flex:1;padding:0 12px}
+.shift-type-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;display:inline-block;margin-bottom:3px}
+.b-reg{background:rgba(99,102,241,.2);color:var(--primary-light)}
+.b-sat{background:rgba(245,158,11,.2);color:var(--warning)}
+.b-hol{background:rgba(168,85,247,.2);color:#c084fc}
+.b-sick{background:rgba(239,68,68,.2);color:#f87171}
+.b-vac{background:rgba(16,185,129,.2);color:var(--success)}
+.shift-times{font-size:13px;color:var(--muted)}
+.shift-amount{text-align:right}
+.shift-amount .amount{font-size:16px;font-weight:700;color:var(--amount)}
+.shift-amount .hours{font-size:12px;color:var(--muted)}
+.month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.month-nav .month-title{font-size:20px;font-weight:700}
+.month-nav button{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.month-nav button:hover{border-color:var(--primary);color:var(--primary-light)}
+.alert{padding:14px 16px;border-radius:var(--radius-sm);margin-bottom:16px;font-size:14px;display:flex;align-items:flex-start;gap:10px}
+.alert-warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#fcd34d}
+.alert-ok{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
+.alert-info{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);color:#a5b4fc}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 20px;font-size:14px;font-weight:500;opacity:0;transition:all .3s;z-index:300;white-space:nowrap;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.success{border-color:var(--success);color:var(--success)}
+#toast.error{border-color:var(--danger);color:var(--danger)}
+#toast.info{border-color:var(--primary);color:var(--primary-light)}
+.section-title{font-size:16px;font-weight:700;margin-bottom:12px}
+.section-title span{color:var(--muted);font-weight:400;font-size:13px;margin-left:8px}
+.progress-bar{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;border-radius:3px;transition:width .3s}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-state .empty-icon{font-size:48px;margin-bottom:12px}
+.history-month{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+.history-month-header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.history-month-header:hover{background:var(--surface2)}
+.history-month-body{padding:0 20px 16px;border-top:1px solid var(--border)}
+.settings-group{margin-bottom:24px}
+.settings-group-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--primary-light);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;z-index:500}
+.modal-content{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;padding:24px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+.del-btn{background:none;border:none;color:var(--danger);cursor:pointer;padding:4px 8px;font-size:16px;opacity:.6;transition:opacity .2s}
+.del-btn:hover{opacity:1}
+.hidden{display:none!important}
+.flex{display:flex}.flex-1{flex:1}.items-center{align-items:center}.justify-between{justify-content:space-between}
+.gap-8{gap:8px}.gap-12{gap:12px}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}
+.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-0{margin-bottom:0}
+.text-muted{color:var(--muted)}.text-ok{color:var(--success)}.text-warn{color:var(--warning)}.text-danger{color:var(--danger)}.text-amount{color:var(--amount)}.text-primary{color:var(--primary-light)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="logo">💰</div>
+    <h1>מחשבון שכר</h1>
+    <h2>Israeli Salary Calculator</h2>
+    <div id="loginForm">
+      <div class="form-group">
+        <label>Admin Password</label>
+        <input type="password" id="loginPw" placeholder="Enter your password" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" onclick="handleLogin()">Login →</button>
+      <p id="loginErr" class="text-danger" style="margin-top:10px;font-size:13px;display:none"></p>
+    </div>
+    <div id="setupForm" style="display:none">
+      <div class="alert alert-info" style="margin-bottom:16px"><span>🔐</span><span>First run — create a password to protect your salary data.</span></div>
+      <div class="form-group">
+        <label>Create Password</label>
+        <input type="password" id="setPw1" placeholder="Choose a strong password" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="setPw2" placeholder="Repeat password" autocomplete="new-password">
+      </div>
+      <button class="btn btn-primary" onclick="handleSetupPw()">Create & Continue →</button>
+      <p id="setupErr" class="text-danger" style="margin-top:10px;font-size:13px;display:none"></p>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <header id="appHeader">
+    <div>
+      <h1>💰 מחשבון שכר</h1>
+      <div class="subtitle" id="headerSub">Salary Calculator</div>
+    </div>
+    <button class="icon-btn" onclick="handleLogout()" title="Logout">🚪</button>
+  </header>
+  <div id="pageContent"></div>
+  <nav id="bottomNav">
+    <button class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="nav-icon">📊</span>Dashboard</button>
+    <button class="nav-item" onclick="showPage('log')" id="nav-log"><span class="nav-icon">➕</span>Log Day</button>
+    <button class="nav-item" onclick="showPage('history')" id="nav-history"><span class="nav-icon">📅</span>History</button>
+    <button class="nav-item" onclick="showPage('settings')" id="nav-settings"><span class="nav-icon">⚙️</span>Settings</button>
+  </nav>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── CONSTANTS ──────────────────────────────────────────────────
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+const DEFAULTS={
+  employeeName:'',hourlyRate:34,dailyNormHours:9,weeklyNormHours:43,
+  travelPerDay:40,mealBenefitEnabled:true,mealDeductionPerShift:6,
+  fixedMonthlySupplements:0,nightBonusEnabled:false,nightBonusPercent:25,
+  nightStartHour:22,nightEndHour:6,vacationDaysPerYear:14,
+  sickDayAccrualPerMonth:1.5,pensionEmployeeRate:6,
+  webhookUrl:'',webhookAutoSend:true
+};
+
+// ── DATA ───────────────────────────────────────────────────────
+let D={passwordHash:null,settings:{...DEFAULTS},shifts:[],webhookLog:{}};
+
+function load(){
+  try{const r=localStorage.getItem('sc2');if(r){const p=JSON.parse(r);D={...D,...p};D.settings={...DEFAULTS,...p.settings};}}catch(e){}
+}
+function save(){try{localStorage.setItem('sc2',JSON.stringify(D));}catch(e){}}
+
+// ── AUTH ───────────────────────────────────────────────────────
+async function sha256(s){
+  const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+const authed=()=>sessionStorage.getItem('scAuth')==='1';
+const setAuth=(v)=>v?sessionStorage.setItem('scAuth','1'):sessionStorage.removeItem('scAuth');
+
+async function handleLogin(){
+  const pw=document.getElementById('loginPw').value;
+  if(!pw)return;
+  if(await sha256(pw)===D.passwordHash){setAuth(true);showApp();}
+  else{const e=document.getElementById('loginErr');e.textContent='Incorrect password.';e.style.display='block';}
+}
+
+async function handleSetupPw(){
+  const pw=document.getElementById('setPw1').value;
+  const pw2=document.getElementById('setPw2').value;
+  const e=document.getElementById('setupErr');
+  if(!pw||pw.length<4){e.textContent='Min 4 characters.';e.style.display='block';return;}
+  if(pw!==pw2){e.textContent='Passwords do not match.';e.style.display='block';return;}
+  D.passwordHash=await sha256(pw);save();setAuth(true);showApp();
+}
+
+function handleLogout(){if(!confirm('Log out?'))return;setAuth(false);location.reload();}
+
+// ── DATE UTILS ─────────────────────────────────────────────────
+const isSat=(y,m,d)=>new Date(y,m-1,d).getDay()===6;
+const isFri=(y,m,d)=>new Date(y,m-1,d).getDay()===5;
+const dayName=(y,m,d)=>DAYS[new Date(y,m-1,d).getDay()];
+const t2m=t=>{const[h,min]=t.split(':').map(Number);return h*60+(min||0);};
+const m2t=m=>`${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+const fmtH=h=>{if(!h)return'0:00';const hh=Math.floor(h);const mm=Math.round((h-hh)*60);return`${hh}:${String(mm).padStart(2,'0')}`;};
+const fmtC=n=>'₪'+Math.abs(n).toLocaleString('he-IL',{maximumFractionDigits:0});
+const mkKey=(y,m)=>`${y}-${String(m).padStart(2,'0')}`;
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
+
+function workedHours(start,end,brk){
+  let s=t2m(start),e=t2m(end);
+  if(e<=s)e+=1440;
+  return Math.max(0,(e-s-(brk||0)))/60;
+}
+
+function nightHours(start,end,brk,ns,ne){
+  let s=t2m(start),e=t2m(end);
+  if(e<=s)e+=1440;
+  const ns1=ns*60, ne1=(ne<ns?ne+24:ne)*60;
+  let n=0;
+  const ov=(a,b,c,d)=>Math.max(0,Math.min(b,d)-Math.max(a,c));
+  n+=ov(s,e,ns1,ne1);
+  // next day wrap
+  n+=ov(s,e,ns1+1440,ne1+1440);
+  return n/60;
+}
+
+// ── CALCULATIONS ───────────────────────────────────────────────
+function calcShift(sh){
+  const{hourlyRate:r,dailyNormHours:norm,travelPerDay:travel,
+        mealBenefitEnabled:meal,mealDeductionPerShift:mealD,
+        nightBonusEnabled:nightOn,nightBonusPercent:nightPct,
+        nightStartHour:ns,nightEndHour:ne}=D.settings;
+
+  if(sh.dayType==='sick')
+    return{wh:0,reg:0,ot1:0,ot2:0,sat:0,night:0,trv:0,meal:0,sick:0,vac:0,gross:0};
+
+  if(sh.dayType==='vacation'){
+    const v=r*norm;
+    return{wh:norm,reg:0,ot1:0,ot2:0,sat:0,night:0,trv:0,meal:0,sick:0,vac:v,gross:v};
+  }
+
+  const wh=workedHours(sh.startTime,sh.endTime,sh.breakMinutes||0);
+  const actualSat=sh.dayType==='saturday'||(sh.dayType==='regular'&&isSat(sh.year,sh.month,sh.day));
+  const isHol=sh.dayType==='holiday';
+
+  let reg=0,ot1=0,ot2=0,sat=0;
+  if(actualSat||isHol){
+    reg=wh*r; sat=wh*r*0.5; // total = 150%
+  }else{
+    if(wh<=norm) reg=wh*r;
+    else if(wh<=norm+2){reg=norm*r;ot1=(wh-norm)*r*1.25;}
+    else{reg=norm*r;ot1=2*r*1.25;ot2=(wh-norm-2)*r*1.5;}
+  }
+
+  const night=nightOn?nightHours(sh.startTime,sh.endTime,sh.breakMinutes||0,ns,ne)*r*(nightPct/100):0;
+  const trv=travel||0;
+  const mealVal=meal?-(mealD||0):0;
+  const gross=reg+ot1+ot2+sat+night+trv+mealVal;
+  return{wh,reg,ot1,ot2,sat,night,trv,meal:mealVal,sick:0,vac:0,gross,isSat:actualSat,isHol};
+}
+
+function sickPayFactor(seqPosition){
+  if(seqPosition===1)return 0;
+  if(seqPosition<=3)return 0.5;
+  return 1;
+}
+
+function monthSummary(year,month){
+  const s=D.settings;
+  const shifts=D.shifts.filter(x=>x.year===year&&x.month===month).sort((a,b)=>a.day-b.day);
+
+  let daysW=0,sickD=0,vacD=0,totalH=0,regH=0,ot1H=0,ot2H=0,satH=0,satN=0;
+  let regP=0,ot1P=0,ot2P=0,satP=0,nightP=0,trvP=0,mealP=0,sickP=0,vacP=0;
+
+  // Consecutive sick day sequences for proper pay calculation
+  const sickSeqPos={};
+  let cur=[];
+  for(const sh of shifts){
+    if(sh.dayType==='sick'){cur.push(sh.day);}
+    else if(cur.length){cur.forEach((d,i)=>{sickSeqPos[d]=i+1;});cur=[];}
+  }
+  if(cur.length)cur.forEach((d,i)=>{sickSeqPos[d]=i+1;});
+
+  for(const sh of shifts){
+    const c=calcShift(sh);
+    if(sh.dayType==='sick'){
+      sickD++;
+      const pos=sickSeqPos[sh.day]||1;
+      const pay=s.hourlyRate*s.dailyNormHours*sickPayFactor(pos);
+      sickP+=pay;
+    } else if(sh.dayType==='vacation'){
+      vacD++;vacP+=c.vac;
+    } else {
+      daysW++;totalH+=c.wh;
+      regP+=c.reg;ot1P+=c.ot1;ot2P+=c.ot2;satP+=c.sat;nightP+=c.night;trvP+=c.trv;mealP+=c.meal;
+      if(c.isSat||c.isHol){satH+=c.wh;if(c.isSat)satN++;}
+      else{
+        regH+=Math.min(c.wh,s.dailyNormHours);
+        if(c.wh>s.dailyNormHours){ot1H+=Math.min(c.wh-s.dailyNormHours,2);if(c.wh>s.dailyNormHours+2)ot2H+=c.wh-s.dailyNormHours-2;}
+      }
+    }
+  }
+
+  const fixed=s.fixedMonthlySupplements||0;
+  const gross=regP+ot1P+ot2P+satP+nightP+trvP+mealP+fixed+sickP+vacP;
+
+  // Approximate Israeli deductions
+  const pension=gross*(s.pensionEmployeeRate/100);
+  const mw5_9=5500*5/9;
+  let ni=gross<=mw5_9?gross*0.066:mw5_9*0.066+(gross-mw5_9)*0.17;
+  const taxable=Math.max(0,gross-pension);
+  let tax=taxBrackets(taxable)-2.25*242;tax=Math.max(0,tax);
+  const deductions=pension+ni+tax;
+  const net=gross-deductions;
+
+  // Benefits balance
+  const totalSickUsed=D.shifts.filter(x=>x.dayType==='sick'&&(x.year<year||(x.year===year&&x.month<=month))).length;
+  const totalVacUsed=D.shifts.filter(x=>x.dayType==='vacation'&&(x.year<year||(x.year===year&&x.month<=month))).length;
+  const monthsElapsed=(year-2020)*12+(month-1);
+  const sickBal=Math.max(0,monthsElapsed*s.sickDayAccrualPerMonth-totalSickUsed);
+  const vacBal=Math.max(0,monthsElapsed*(s.vacationDaysPerYear/12)-totalVacUsed);
+
+  return{year,month,shifts,daysW,sickD,vacD,totalH,regH,ot1H,ot2H,satH,satN,
+    regP,ot1P,ot2P,satP,nightP,trvP,mealP,sickP,vacP,fixed,gross,
+    pension,ni,tax,deductions,net,sickBal,vacBal};
+}
+
+function taxBrackets(inc){
+  const br=[[6790,.10],[9730,.14],[16560,.20],[21240,.31],[43370,.35],[55890,.47],[Infinity,.50]];
+  let t=0,prev=0;
+  for(const[up,rate]of br){if(inc<=prev)break;t+=(Math.min(inc,up)-prev)*rate;prev=up;}
+  return t;
+}
+
+// ── DISCORD ────────────────────────────────────────────────────
+async function sendWebhook(year,month){
+  const s=D.settings;
+  if(!s.webhookUrl){showToast('No webhook URL in settings','error');return false;}
+  const sm=monthSummary(year,month);
+  const mname=`${MONTHS[month-1]} ${year}`;
+  const fields=[
+    {name:'📅 Work Summary',value:[
+      `**Days Worked:** ${sm.daysW}`,
+      `**Total Hours:** ${fmtH(sm.totalH)}`,
+      `**Shabbat Days:** ${sm.satN}`,
+      `**Sick Days:** ${sm.sickD}`,
+      `**Vacation Days:** ${sm.vacD}`,
+    ].join('\n'),inline:true},
+    {name:'⏰ Hours Breakdown',value:[
+      `Regular (≤${s.dailyNormHours}h): ${fmtH(sm.regH)}`,
+      `Overtime 125%: ${fmtH(sm.ot1H)}`,
+      `Overtime 150%: ${fmtH(sm.ot2H)}`,
+      `Shabbat (150%): ${fmtH(sm.satH)}`,
+    ].join('\n'),inline:true},
+    {name:'​',value:'​',inline:false},
+    {name:'💰 Salary Breakdown',value:[
+      `ימי עבודה (Base): ${fmtC(sm.regP)}`,
+      sm.ot1P>0?`שעות נוספות 125%: ${fmtC(sm.ot1P)}`:null,
+      sm.ot2P>0?`שעות נוספות 150%: ${fmtC(sm.ot2P)}`:null,
+      sm.satP>0?`פרמיית שבת/חג +50%: ${fmtC(sm.satP)}`:null,
+      sm.nightP>0?`תוספת לילה: ${fmtC(sm.nightP)}`:null,
+      sm.trvP>0?`דמי נסיעות: ${fmtC(sm.trvP)}`:null,
+      sm.fixed>0?`תוספות קבועות: ${fmtC(sm.fixed)}`:null,
+      sm.sickP>0?`דמי מחלה: ${fmtC(sm.sickP)}`:null,
+      sm.vacP>0?`תשלום חופשה: ${fmtC(sm.vacP)}`:null,
+      sm.mealP<0?`ניכוי ארוחות: -${fmtC(sm.mealP)}`:null,
+    ].filter(Boolean).join('\n'),inline:false},
+    {name:'📊 Totals (Estimates)',value:[
+      `**ברוטו Gross: ${fmtC(sm.gross)}**`,
+      `Pension (${s.pensionEmployeeRate}%): -${fmtC(sm.pension)}`,
+      `BI + Health: -${fmtC(sm.ni)}`,
+      `Income Tax: -${fmtC(sm.tax)}`,
+      `**נטו Net: ${fmtC(sm.net)}**`,
+    ].join('\n'),inline:false},
+    {name:'🏥 Benefits Balance',value:[
+      `Sick days left: ${sm.sickBal.toFixed(1)}`,
+      `Vacation days left: ${sm.vacBal.toFixed(1)}`,
+    ].join('\n'),inline:true},
+  ];
+
+  const body={
+    username:'מחשבון שכר | Salary Calculator',
+    embeds:[{
+      title:`📊 Monthly Salary Report — ${mname}`,
+      description:s.employeeName?`**Employee:** ${s.employeeName}\n⚠️ Estimates only — actual תלוש may differ.`:'⚠️ Estimates only — actual תלוש may differ.',
+      color:0x6366f1,fields,
+      footer:{text:`Salary Calculator • ${new Date().toLocaleDateString('he-IL')}`},
+      timestamp:new Date().toISOString()
+    }]
+  };
+
+  try{
+    const res=await fetch(s.webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(res.ok||res.status===204){
+      D.webhookLog[mkKey(year,month)]={sent:true,at:new Date().toISOString()};
+      save();showToast(`Report sent to Discord ✅`,'success');return true;
+    }else{showToast(`Discord error ${res.status}`,'error');return false;}
+  }catch(e){showToast(`Failed: ${e.message}`,'error');return false;}
+}
+
+function checkAutoWebhook(){
+  const t=new Date();
+  if(t.getDate()!==1||!D.settings.webhookUrl||!D.settings.webhookAutoSend)return;
+  const prev=new Date(t.getFullYear(),t.getMonth()-1,1);
+  const key=mkKey(prev.getFullYear(),prev.getMonth()+1);
+  if(!D.webhookLog[key]?.sent){
+    setTimeout(()=>sendWebhook(prev.getFullYear(),prev.getMonth()+1).then(()=>renderPage()),2000);
+  }
+}
+
+// ── UI STATE ───────────────────────────────────────────────────
+let page='dashboard';
+let vY=new Date().getFullYear();
+let vM=new Date().getMonth()+1;
+
+function showPage(p){
+  page=p;
+  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+  const n=document.getElementById(`nav-${p}`);if(n)n.classList.add('active');
+  renderPage();
+}
+
+function renderPage(){
+  if(page==='dashboard')renderDash();
+  else if(page==='log')renderLog();
+  else if(page==='history')renderHistory();
+  else if(page==='settings')renderSettings();
+}
+
+function showApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('headerSub').textContent=D.settings.employeeName||'Salary Calculator';
+  checkAutoWebhook();
+  renderPage();
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────────
+function renderDash(){
+  const sm=monthSummary(vY,vM);
+  const s=D.settings;
+  const key=mkKey(vY,vM);
+  const wSent=D.webhookLog[key]?.sent;
+
+  // First of month notice
+  const today=new Date();
+  let autoAlert='';
+  if(today.getDate()===1&&vY===today.getFullYear()&&vM===today.getMonth()+1){
+    const pk=mkKey(today.getFullYear(),today.getMonth()===0?12:today.getMonth(),(today.getMonth()===0?today.getFullYear()-1:today.getFullYear()));
+    // simplified
+  }
+
+  const rows=sm.shifts.slice().reverse().map(sh=>{
+    const c=calcShift(sh);
+    const dn=dayName(sh.year,sh.month,sh.day);
+    const actualSat=sh.dayType==='saturday'||(sh.dayType==='regular'&&isSat(sh.year,sh.month,sh.day));
+    let badge='b-reg',label='💼 Work';
+    if(sh.dayType==='sick'){badge='b-sick';label='🏥 Sick';}
+    else if(sh.dayType==='vacation'){badge='b-vac';label='🌴 Vacation';}
+    else if(sh.dayType==='holiday'){badge='b-hol';label='✡️ Holiday';}
+    else if(actualSat){badge='b-sat';label='✡️ Shabbat';}
+    const timeStr=(sh.dayType==='sick'||sh.dayType==='vacation')?'—':`${sh.startTime||'?'} → ${sh.endTime||'?'}`;
+    return`<div class="shift-item ${actualSat?'sat':''} ${sh.dayType==='sick'?'sick':''} ${sh.dayType==='vacation'?'vac':''} ${sh.dayType==='holiday'?'hol':''}" onclick="shiftModal('${sh.id}')">
+      <div class="shift-date"><div class="day-num">${sh.day}</div><div class="day-name">${dn}</div></div>
+      <div class="shift-info"><span class="shift-type-badge ${badge}">${label}</span><div class="shift-times">${timeStr}</div></div>
+      <div class="shift-amount"><div class="amount">${fmtC(c.gross)}</div><div class="hours">${c.wh>0?fmtH(c.wh)+'h':'—'}</div></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('pageContent').innerHTML=`
+<div class="month-nav">
+  <button onclick="prevM()">&#8249;</button>
+  <div class="month-title">${MONTHS[vM-1]} ${vY}</div>
+  <button onclick="nextM()">&#8250;</button>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card hi"><div class="stat-label">Days Worked</div><div class="stat-value">${sm.daysW}</div><div class="stat-sub">${sm.satN} Shabbat</div></div>
+  <div class="stat-card"><div class="stat-label">Total Hours</div><div class="stat-value">${fmtH(sm.totalH)}</div><div class="stat-sub">OT: ${fmtH(sm.ot1H+sm.ot2H)}</div></div>
+  <div class="stat-card"><div class="stat-label">Sick / Vac</div><div class="stat-value">${sm.sickD}/${sm.vacD}</div><div class="stat-sub">days</div></div>
+</div>
+
+<div class="stat-grid" style="grid-template-columns:1fr 1fr">
+  <div class="stat-card hi"><div class="stat-label">Gross (ברוטו)</div><div class="stat-value" style="font-size:20px">${fmtC(sm.gross)}</div><div class="stat-sub">before deductions</div></div>
+  <div class="stat-card ok"><div class="stat-label">Net Est. (נטו)</div><div class="stat-value" style="font-size:20px">${fmtC(sm.net)}</div><div class="stat-sub">after est. deductions</div></div>
+</div>
+
+<div class="card mb-16">
+  <div class="card-title">💰 Gross Breakdown</div>
+  ${sm.regP>0?`<div class="breakdown-row"><div class="breakdown-label">ימי עבודה — Base Pay<small>${fmtH(sm.regH)}h regular × ₪${s.hourlyRate}/h</small></div><div class="breakdown-amount">${fmtC(sm.regP)}</div></div>`:''}
+  ${sm.ot1P>0?`<div class="breakdown-row"><div class="breakdown-label">שעות נוספות 125%<small>${fmtH(sm.ot1H)}h overtime (first 2h/day)</small></div><div class="breakdown-amount">${fmtC(sm.ot1P)}</div></div>`:''}
+  ${sm.ot2P>0?`<div class="breakdown-row"><div class="breakdown-label">שעות נוספות 150%<small>${fmtH(sm.ot2H)}h overtime (beyond 2h)</small></div><div class="breakdown-amount">${fmtC(sm.ot2P)}</div></div>`:''}
+  ${sm.satP>0?`<div class="breakdown-row"><div class="breakdown-label">פרמיית שבת/חג +50%<small>${fmtH(sm.satH)}h × 50% premium (Israeli law)</small></div><div class="breakdown-amount">${fmtC(sm.satP)}</div></div>`:''}
+  ${sm.nightP>0?`<div class="breakdown-row"><div class="breakdown-label">תוספת לילה Night Bonus<small>${s.nightBonusPercent}% for 22:00–06:00</small></div><div class="breakdown-amount">${fmtC(sm.nightP)}</div></div>`:''}
+  ${sm.trvP>0?`<div class="breakdown-row"><div class="breakdown-label">דמי נסיעות Travel<small>₪${s.travelPerDay}/day × ${sm.daysW} days</small></div><div class="breakdown-amount">${fmtC(sm.trvP)}</div></div>`:''}
+  ${sm.fixed>0?`<div class="breakdown-row"><div class="breakdown-label">תוספות קבועות Fixed Supplement</div><div class="breakdown-amount">${fmtC(sm.fixed)}</div></div>`:''}
+  ${sm.sickP>0?`<div class="breakdown-row"><div class="breakdown-label">דמי מחלה Sick Pay<small>Israeli law: day1=0%, days2-3=50%, day4+=100%</small></div><div class="breakdown-amount">${fmtC(sm.sickP)}</div></div>`:''}
+  ${sm.vacP>0?`<div class="breakdown-row"><div class="breakdown-label">חופשה Vacation Pay<small>${sm.vacD} days × ₪${(s.hourlyRate*s.dailyNormHours).toFixed(0)}/day</small></div><div class="breakdown-amount">${fmtC(sm.vacP)}</div></div>`:''}
+  ${sm.mealP<0?`<div class="breakdown-row"><div class="breakdown-label">ניכוי ארוחות Meal VAT Deduction<small>₪${s.mealDeductionPerShift}/shift</small></div><div class="breakdown-amount neg">-${fmtC(sm.mealP)}</div></div>`:''}
+  <div class="breakdown-row total"><div class="breakdown-label">ברוטו Gross Total</div><div class="breakdown-amount">${fmtC(sm.gross)}</div></div>
+</div>
+
+<div class="card mb-16">
+  <div class="card-title">📉 Est. Deductions</div>
+  <div class="breakdown-row"><div class="breakdown-label">Pension Employee (${s.pensionEmployeeRate}%)<small>קרן פנסיה עובד</small></div><div class="breakdown-amount neg">-${fmtC(sm.pension)}</div></div>
+  <div class="breakdown-row"><div class="breakdown-label">National Insurance + Health<small>ביטוח לאומי + מס בריאות</small></div><div class="breakdown-amount neg">-${fmtC(sm.ni)}</div></div>
+  <div class="breakdown-row"><div class="breakdown-label">Income Tax (2.25 credit pts)<small>מס הכנסה — estimated</small></div><div class="breakdown-amount neg">-${fmtC(sm.tax)}</div></div>
+  <div class="breakdown-row total"><div class="breakdown-label">נטו Est. Net</div><div class="breakdown-amount" style="color:var(--success)">${fmtC(sm.net)}</div></div>
+  <p style="font-size:11px;color:var(--muted);margin-top:8px">⚠️ Deductions are estimates. Actual תלוש depends on pension fund, tax file, employer contributions etc.</p>
+</div>
+
+<div class="card mb-16">
+  <div class="card-title">🏥 Benefits Balance</div>
+  <div class="flex justify-between items-center mb-8"><span class="text-muted">Sick Days Remaining (ימי מחלה)</span><b>${sm.sickBal.toFixed(1)} days</b></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100,sm.sickBal/18*100)}%;background:var(--danger)"></div></div>
+  <div class="flex justify-between items-center mb-8 mt-12"><span class="text-muted">Vacation Days Remaining (ימי חופשה)</span><b>${sm.vacBal.toFixed(1)} days</b></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100,sm.vacBal/s.vacationDaysPerYear*100)}%;background:var(--success)"></div></div>
+</div>
+
+<div class="flex gap-8 mb-16">
+  <button class="btn btn-outline flex-1" onclick="showPage('log')">+ Log Shift</button>
+  <button class="btn ${wSent?'btn-outline':'btn-primary'} flex-1" onclick="manualSend(${vY},${vM})">${wSent?'✅ Re-send Discord':'📤 Send to Discord'}</button>
+</div>
+
+<div class="section-title">Shifts This Month<span>(${sm.shifts.length} entries)</span></div>
+${sm.shifts.length===0
+  ?'<div class="empty-state"><div class="empty-icon">📭</div><p>No shifts yet.<br>Tap <b>Log Day</b> to add one.</p></div>'
+  :`<div class="shift-list">${rows}</div>`}
+`;
+}
+
+function prevM(){if(vM===1){vM=12;vY--;}else vM--;renderPage();}
+function nextM(){if(vM===12){vM=1;vY++;}else vM++;renderPage();}
+async function manualSend(y,m){await sendWebhook(y,m);renderPage();}
+
+// ── LOG SHIFT ──────────────────────────────────────────────────
+function renderLog(){
+  const t=new Date();
+  const dd=t.getDate(),dm=t.getMonth()+1,dy=t.getFullYear();
+  const defSat=isSat(dy,dm,dd);
+
+  document.getElementById('pageContent').innerHTML=`
+<h2 class="section-title" style="margin-bottom:20px">Log Work Day ➕</h2>
+<div class="card mb-16">
+  <div class="card-title">📅 Date</div>
+  <div class="form-row mb-12">
+    <div class="form-group mb-0"><label>Day of Month</label><input type="number" id="lDay" min="1" max="31" value="${dd}" oninput="onDateChange()"></div>
+    <div class="form-group mb-0"><label>Month</label>
+      <select id="lMonth" onchange="onDateChange()">
+        ${MONTHS.map((m,i)=>`<option value="${i+1}"${i+1===dm?' selected':''}>${m}</option>`).join('')}
+      </select></div>
+  </div>
+  <div class="form-group mb-0"><label>Year</label>
+    <select id="lYear" onchange="onDateChange()">
+      ${[dy-1,dy,dy+1].map(y=>`<option value="${y}"${y===dy?' selected':''}>${y}</option>`).join('')}
+    </select></div>
+</div>
+
+<div class="card mb-16">
+  <div class="card-title">🏷️ Type</div>
+  <div class="form-group mb-0"><label>Day Type</label>
+    <select id="lType" onchange="onTypeChange()">
+      <option value="regular"${!defSat?' selected':''}>💼 Regular Workday</option>
+      <option value="saturday"${defSat?' selected':''}>✡️ Shabbat (Saturday) — 150%</option>
+      <option value="holiday">🕍 Jewish Holiday (חג) — 150%</option>
+      <option value="sick">🏥 Sick Day (מחלה)</option>
+      <option value="vacation">🌴 Vacation Day (חופשה)</option>
+    </select></div>
+</div>
+
+<div id="timeCard" class="card mb-16">
+  <div class="card-title">🕐 Hours</div>
+  <div class="form-row mb-12">
+    <div class="form-group mb-0"><label>Start Time (שעת כניסה)</label><input type="time" id="lStart" value="09:00" oninput="updatePreview()"></div>
+    <div class="form-group mb-0"><label>End Time (שעת יציאה)</label><input type="time" id="lEnd" value="18:00" oninput="updatePreview()"></div>
+  </div>
+  <div class="form-group mb-0"><label>Break (minutes) — הפסקה</label><input type="number" id="lBreak" min="0" max="120" value="45" oninput="updatePreview()"></div>
+  <div id="preview" class="alert alert-info mt-8 mb-0" style="padding:10px 14px;font-size:13px"></div>
+</div>
+
+<div class="form-group"><label>📝 Notes (optional)</label><input type="text" id="lNotes" placeholder="Add notes..."></div>
+<button class="btn btn-primary btn-block" style="padding:16px" onclick="submitShift()">✅ Save Entry</button>
+`;
+  onDateChange();
+  updatePreview();
+}
+
+function onDateChange(){
+  const d=+document.getElementById('lDay').value;
+  const m=+document.getElementById('lMonth').value;
+  const y=+document.getElementById('lYear').value;
+  if(isSat(y,m,d))document.getElementById('lType').value='saturday';
+  onTypeChange();
+}
+
+function onTypeChange(){
+  const t=document.getElementById('lType').value;
+  const tc=document.getElementById('timeCard');
+  if(tc)tc.style.display=(t==='sick'||t==='vacation')?'none':'block';
+  updatePreview();
+}
+
+function updatePreview(){
+  const el=document.getElementById('preview');if(!el)return;
+  const s=document.getElementById('lStart')?.value;
+  const e=document.getElementById('lEnd')?.value;
+  const b=+(document.getElementById('lBreak')?.value||0);
+  const tp=document.getElementById('lType')?.value||'regular';
+  if(!s||!e||tp==='sick'||tp==='vacation')return;
+  const wh=workedHours(s,e,b);
+  const norm=D.settings.dailyNormHours;
+  let desc=`<b>${fmtH(wh)}h worked</b> — `;
+  if(tp==='saturday'||tp==='holiday'){
+    desc+=`All ${fmtH(wh)}h at 150% (Shabbat/Holiday)`;
+  }else{
+    const rh=Math.min(wh,norm);
+    const o1=Math.min(Math.max(0,wh-norm),2);
+    const o2=Math.max(0,wh-norm-2);
+    desc+=`${fmtH(rh)}h base`;
+    if(o1>0)desc+=` + ${fmtH(o1)}h @125%`;
+    if(o2>0)desc+=` + ${fmtH(o2)}h @150%`;
+  }
+  const fake={year:2026,month:1,day:6,startTime:s,endTime:e,breakMinutes:b,dayType:tp};
+  const c=calcShift(fake);
+  desc+=`<br>Est. pay: <b style="color:var(--amount)">${fmtC(c.gross)}</b>`;
+  el.innerHTML=desc;
+}
+
+function submitShift(){
+  const day=+document.getElementById('lDay').value;
+  const month=+document.getElementById('lMonth').value;
+  const year=+document.getElementById('lYear').value;
+  const dayType=document.getElementById('lType').value;
+  const notes=document.getElementById('lNotes')?.value||'';
+
+  if(!day||day<1||day>31){showToast('Enter a valid day (1–31)','error');return;}
+
+  let startTime=null,endTime=null,breakMinutes=0;
+  if(dayType!=='sick'&&dayType!=='vacation'){
+    startTime=document.getElementById('lStart')?.value;
+    endTime=document.getElementById('lEnd')?.value;
+    breakMinutes=+(document.getElementById('lBreak')?.value||0);
+    if(!startTime||!endTime){showToast('Enter start and end times','error');return;}
+  }
+
+  D.shifts.push({id:uid(),year,month,day,startTime,endTime,breakMinutes,dayType,notes});
+  save();
+
+  const fake={year,month,day,startTime,endTime,breakMinutes,dayType};
+  const c=calcShift(fake);
+  showToast(`Saved! Est: ${fmtC(c.gross)}`,'success');
+
+  vY=year;vM=month;
+  showPage('dashboard');
+}
+
+// ── HISTORY ────────────────────────────────────────────────────
+function renderHistory(){
+  const keys=[...new Set(D.shifts.map(s=>mkKey(s.year,s.month)))].sort().reverse();
+  if(!keys.length){
+    document.getElementById('pageContent').innerHTML=`<h2 class="section-title" style="margin-bottom:20px">History 📅</h2><div class="empty-state"><div class="empty-icon">📭</div><p>No data yet. Start logging shifts!</p></div>`;
+    return;
+  }
+  const html=keys.map(k=>{
+    const[y,m]=k.split('-').map(Number);
+    const sm=monthSummary(y,m);
+    const ws=D.webhookLog[k]?.sent;
+    return`<div class="history-month">
+  <div class="history-month-header" onclick="toggleHist('${k}')">
+    <div><div style="font-size:16px;font-weight:600">${MONTHS[m-1]} ${y}</div>
+    <div class="text-muted" style="font-size:12px">${sm.daysW} days · ${fmtH(sm.totalH)}h · ${fmtC(sm.gross)} gross · net ~${fmtC(sm.net)}</div></div>
+    <div style="display:flex;gap:8px;align-items:center">${ws?'<span style="font-size:11px;color:var(--success)">✅</span>':''}<span id="ar-${k}" style="font-size:20px;color:var(--muted)">›</span></div>
+  </div>
+  <div id="hb-${k}" style="display:none">
+    <div class="history-month-body">
+      <div class="flex gap-8 mb-12">
+        <button class="btn btn-outline btn-sm" onclick="goDash(${y},${m})">📊 View</button>
+        <button class="btn btn-outline btn-sm" onclick="manualSend(${y},${m})">${ws?'📤 Re-send':'📤 Discord'}</button>
+      </div>
+      <div class="shift-list">
+        ${sm.shifts.map(sh=>{
+          const c=calcShift(sh);
+          const actualSat=sh.dayType==='saturday'||(sh.dayType==='regular'&&isSat(sh.year,sh.month,sh.day));
+          return`<div class="shift-item ${actualSat?'sat':''} ${sh.dayType==='sick'?'sick':''} ${sh.dayType==='vacation'?'vac':''}">
+            <div class="shift-date"><div class="day-num">${sh.day}</div><div class="day-name">${dayName(sh.year,sh.month,sh.day)}</div></div>
+            <div class="shift-info">
+              <div class="shift-times" style="font-size:13px">${sh.startTime?sh.startTime+' → '+sh.endTime:sh.dayType}</div>
+              <div style="font-size:12px;color:var(--muted)">${sh.breakMinutes?'break '+sh.breakMinutes+'m':''} ${sh.notes?'· '+sh.notes:''}</div>
+            </div>
+            <div class="shift-amount" style="display:flex;align-items:center;gap:8px">
+              <div class="amount">${fmtC(c.gross)}</div>
+              <button class="del-btn" onclick="delShift('${sh.id}',event)">🗑</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>
+</div>`;
+  }).join('');
+  document.getElementById('pageContent').innerHTML=`<h2 class="section-title" style="margin-bottom:20px">History 📅</h2>${html}`;
+}
+
+function toggleHist(k){
+  const b=document.getElementById(`hb-${k}`);
+  const a=document.getElementById(`ar-${k}`);
+  if(!b)return;
+  const open=b.style.display!=='none';
+  b.style.display=open?'none':'block';
+  a.textContent=open?'›':'⌄';
+}
+function goDash(y,m){vY=y;vM=m;showPage('dashboard');}
+function delShift(id,ev){
+  ev.stopPropagation();
+  if(!confirm('Delete this entry?'))return;
+  D.shifts=D.shifts.filter(s=>s.id!==id);
+  save();showToast('Deleted','info');renderPage();
+}
+
+// ── SETTINGS ───────────────────────────────────────────────────
+function renderSettings(){
+  const s=D.settings;
+  document.getElementById('pageContent').innerHTML=`
+<h2 class="section-title" style="margin-bottom:20px">Settings ⚙️</h2>
+
+<div class="settings-group">
+  <div class="settings-group-title">👤 Employee</div>
+  <div class="form-group"><label>Name</label><input type="text" id="sName" value="${s.employeeName||''}"></div>
+</div>
+
+<div class="settings-group">
+  <div class="settings-group-title">💰 Salary Rates</div>
+  <div class="form-group"><label>Hourly Rate ₪/hour — שכר שעתי</label><input type="number" id="sRate" value="${s.hourlyRate}" step="0.5" min="0"></div>
+  <div class="form-row">
+    <div class="form-group"><label>Daily Norm (hours) — נורמה יומית</label><input type="number" id="sDNorm" value="${s.dailyNormHours}" step="0.5" min="1" max="12"></div>
+    <div class="form-group"><label>Weekly Norm (hours) — נורמה שבועית</label><input type="number" id="sWNorm" value="${s.weeklyNormHours}" step="1" min="1" max="60"></div>
+  </div>
+  <div class="form-group"><label>Fixed Monthly Supplement ₪ — תוספת חודשית קבועה</label><input type="number" id="sFixed" value="${s.fixedMonthlySupplements}" step="50" min="0"></div>
+</div>
+
+<div class="settings-group">
+  <div class="settings-group-title">🚌 Travel &amp; Meals</div>
+  <div class="form-group"><label>Travel Allowance ₪/workday — דמי נסיעות ליום</label><input type="number" id="sTravel" value="${s.travelPerDay}" step="1" min="0"></div>
+  <div class="form-group" style="display:flex;align-items:center;gap:12px">
+    <label style="flex:1;margin-bottom:0">Meal Benefit Enabled — שווי ארוחות</label>
+    <input type="checkbox" id="sMealOn" ${s.mealBenefitEnabled?'checked':''} style="width:20px;height:20px">
+  </div>
+  <div class="form-group mt-12"><label>Meal VAT Deduction ₪/shift — ניכוי מע"מ ארוחות</label><input type="number" id="sMealD" value="${s.mealDeductionPerShift}" step="0.5" min="0"></div>
+</div>
+
+<div class="settings-group">
+  <div class="settings-group-title">🌙 Night Bonus</div>
+  <div class="form-group" style="display:flex;align-items:center;gap:12px">
+    <label style="flex:1;margin-bottom:0">Night Bonus Enabled — תוספת לילה</label>
+    <input type="checkbox" id="sNightOn" ${s.nightBonusEnabled?'checked':''} style="width:20px;height:20px">
+  </div>
+  <div class="form-row mt-12">
+    <div class="form-group"><label>Bonus % — אחוז</label><input type="number" id="sNightPct" value="${s.nightBonusPercent}" min="0" max="100"></div>
+    <div class="form-group"><label>Night Start Hour (e.g. 22)</label><input type="number" id="sNightH" value="${s.nightStartHour}" min="0" max="23"></div>
+  </div>
+</div>
+
+<div class="settings-group">
+  <div class="settings-group-title">🏖️ Benefits &amp; Deductions</div>
+  <div class="form-row">
+    <div class="form-group"><label>Vacation Days/Year — ימי חופשה</label><input type="number" id="sVac" value="${s.vacationDaysPerYear}" min="10" max="30"></div>
+    <div class="form-group"><label>Sick Accrual/Month — מחלה לחודש</label><input type="number" id="sSick" value="${s.sickDayAccrualPerMonth}" step="0.5" min="0"></div>
+  </div>
+  <div class="form-group"><label>Pension Employee % — פנסיה עובד</label><input type="number" id="sPension" value="${s.pensionEmployeeRate}" step="0.5" min="0" max="20"></div>
+</div>
+
+<div class="settings-group">
+  <div class="settings-group-title">🤖 Discord Webhook</div>
+  <div class="form-group"><label>Webhook URL</label><input type="text" id="sWH" value="${s.webhookUrl||''}" placeholder="https://discord.com/api/webhooks/..."></div>
+  <div class="form-group" style="display:flex;align-items:center;gap:12px">
+    <label style="flex:1;margin-bottom:0">Auto-send on 1st of month</label>
+    <input type="checkbox" id="sAutoSend" ${s.webhookAutoSend?'checked':''} style="width:20px;height:20px">
+  </div>
+  <button class="btn btn-outline btn-sm mt-8" onclick="testWH()">📤 Test Webhook Now</button>
+</div>
+
+<div class="settings-group">
+  <div class="settings-group-title">🔐 Security</div>
+  <button class="btn btn-outline btn-block mb-8" onclick="changePw()">🔑 Change Password</button>
+</div>
+
+<div class="settings-group">
+  <div class="settings-group-title">💾 Data</div>
+  <button class="btn btn-outline btn-block mb-8" onclick="exportData()">⬇️ Export JSON</button>
+  <div class="form-group"><label>Import JSON</label><input type="file" id="importFile" accept=".json" onchange="importData(event)" style="padding:8px"></div>
+  <button class="btn btn-danger btn-block mt-8" onclick="clearData()">🗑️ Clear All Data</button>
+</div>
+
+<button class="btn btn-primary btn-block mt-16" style="padding:16px" onclick="saveSettings()">✅ Save Settings</button>
+`;
+}
+
+function saveSettings(){
+  const s=D.settings;
+  s.employeeName=document.getElementById('sName').value;
+  s.hourlyRate=+document.getElementById('sRate').value||34;
+  s.dailyNormHours=+document.getElementById('sDNorm').value||9;
+  s.weeklyNormHours=+document.getElementById('sWNorm').value||43;
+  s.fixedMonthlySupplements=+document.getElementById('sFixed').value||0;
+  s.travelPerDay=+document.getElementById('sTravel').value||0;
+  s.mealBenefitEnabled=document.getElementById('sMealOn').checked;
+  s.mealDeductionPerShift=+document.getElementById('sMealD').value||0;
+  s.nightBonusEnabled=document.getElementById('sNightOn').checked;
+  s.nightBonusPercent=+document.getElementById('sNightPct').value||25;
+  s.nightStartHour=+document.getElementById('sNightH').value||22;
+  s.vacationDaysPerYear=+document.getElementById('sVac').value||14;
+  s.sickDayAccrualPerMonth=+document.getElementById('sSick').value||1.5;
+  s.pensionEmployeeRate=+document.getElementById('sPension').value||6;
+  s.webhookUrl=document.getElementById('sWH').value.trim();
+  s.webhookAutoSend=document.getElementById('sAutoSend').checked;
+  save();
+  document.getElementById('headerSub').textContent=s.employeeName||'Salary Calculator';
+  showToast('Settings saved ✅','success');
+}
+
+async function testWH(){
+  const t=new Date();
+  await sendWebhook(t.getFullYear(),t.getMonth()+1);
+}
+
+async function changePw(){
+  const pw=prompt('New password (min 4 chars):');
+  if(!pw)return;
+  if(pw.length<4){showToast('Min 4 characters','error');return;}
+  const c=prompt('Confirm new password:');
+  if(pw!==c){showToast('Passwords do not match','error');return;}
+  D.passwordHash=await sha256(pw);save();showToast('Password changed ✅','success');
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:`salary-${new Date().toISOString().slice(0,10)}.json`});
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+function importData(ev){
+  const f=ev.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const imp=JSON.parse(e.target.result);
+      if(!confirm('This will REPLACE all current data. Continue?'))return;
+      D={...D,...imp};D.settings={...DEFAULTS,...imp.settings};
+      save();showToast('Data imported ✅','success');renderPage();
+    }catch{showToast('Invalid JSON file','error');}
+  };
+  r.readAsText(f);
+}
+
+function clearData(){
+  if(!confirm('Delete ALL salary data? This cannot be undone!'))return;
+  if(!confirm('Really sure? Last chance.'))return;
+  localStorage.removeItem('sc2');sessionStorage.removeItem('scAuth');location.reload();
+}
+
+// ── SHIFT MODAL ────────────────────────────────────────────────
+function shiftModal(id){
+  const sh=D.shifts.find(s=>s.id===id);if(!sh)return;
+  const c=calcShift(sh);
+  const dn=dayName(sh.year,sh.month,sh.day);
+  const overlay=document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.innerHTML=`<div class="modal-content">
+  <div class="modal-title">
+    <span>${MONTHS[sh.month-1]} ${sh.day}, ${sh.year} (${dn})</span>
+    <button onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:24px;line-height:1">×</button>
+  </div>
+  <div class="breakdown-row"><div class="breakdown-label">Type</div><div>${sh.dayType}</div></div>
+  ${sh.startTime?`<div class="breakdown-row"><div class="breakdown-label">Times</div><div>${sh.startTime} → ${sh.endTime} (break ${sh.breakMinutes||0}m)</div></div>
+  <div class="breakdown-row"><div class="breakdown-label">Hours Worked</div><div>${fmtH(c.wh)}h</div></div>`:''}
+  ${c.reg>0?`<div class="breakdown-row"><div class="breakdown-label">Base Pay</div><div class="text-amount">${fmtC(c.reg)}</div></div>`:''}
+  ${c.ot1>0?`<div class="breakdown-row"><div class="breakdown-label">Overtime 125%</div><div class="text-amount">${fmtC(c.ot1)}</div></div>`:''}
+  ${c.ot2>0?`<div class="breakdown-row"><div class="breakdown-label">Overtime 150%</div><div class="text-amount">${fmtC(c.ot2)}</div></div>`:''}
+  ${c.sat>0?`<div class="breakdown-row"><div class="breakdown-label">Shabbat Bonus +50%</div><div class="text-amount">${fmtC(c.sat)}</div></div>`:''}
+  ${c.night>0?`<div class="breakdown-row"><div class="breakdown-label">Night Bonus</div><div class="text-amount">${fmtC(c.night)}</div></div>`:''}
+  ${c.trv>0?`<div class="breakdown-row"><div class="breakdown-label">Travel</div><div class="text-amount">${fmtC(c.trv)}</div></div>`:''}
+  ${c.meal<0?`<div class="breakdown-row"><div class="breakdown-label">Meal Deduction</div><div class="text-danger">-${fmtC(c.meal)}</div></div>`:''}
+  ${c.vac>0?`<div class="breakdown-row"><div class="breakdown-label">Vacation Pay</div><div class="text-amount">${fmtC(c.vac)}</div></div>`:''}
+  <div class="breakdown-row total"><div class="breakdown-label">Total Estimate</div><div class="breakdown-amount">${fmtC(c.gross)}</div></div>
+  ${sh.notes?`<div class="text-muted mt-12" style="font-size:13px">📝 ${sh.notes}</div>`:''}
+  <button class="btn btn-danger btn-block mt-16" onclick="delShift('${sh.id}',event);this.closest('.modal-overlay').remove()">🗑️ Delete Entry</button>
+</div>`;
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+  document.body.appendChild(overlay);
+}
+
+// ── TOAST ──────────────────────────────────────────────────────
+let toastT;
+function showToast(msg,type='info'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className=`show ${type}`;
+  clearTimeout(toastT);toastT=setTimeout(()=>{el.className='';},3200);
+}
+
+// ── INIT ───────────────────────────────────────────────────────
+function init(){
+  load();
+  document.getElementById('loginPw').addEventListener('keypress',e=>{if(e.key==='Enter')handleLogin();});
+  document.getElementById('setPw2')?.addEventListener('keypress',e=>{if(e.key==='Enter')handleSetupPw();});
+  if(!D.passwordHash){
+    document.getElementById('loginForm').style.display='none';
+    document.getElementById('setupForm').style.display='block';
+  } else if(authed()){
+    showApp();
+  }
+}
+init();
+</script>
+</body>
+</html>

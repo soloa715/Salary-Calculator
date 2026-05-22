@@ -182,7 +182,7 @@ const MONTHS=['January','February','March','April','May','June','July','August',
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const DEFAULTS={
-  employeeName:'',hourlyRate:34,dailyNormHours:9,weeklyNormHours:43,
+  employeeName:'',hourlyRate:34,dailyNormHours:8,weeklyNormHours:40,
   travelPerDay:40,mealBenefitEnabled:true,mealDeductionPerShift:6,
   fixedMonthlySupplements:0,nightBonusEnabled:false,nightBonusPercent:25,
   nightStartHour:22,nightEndHour:6,vacationDaysPerYear:14,
@@ -603,7 +603,7 @@ function renderLog(){
     <div class="form-group mb-0"><label>Start Time (שעת כניסה)</label><input type="time" id="lStart" value="09:00" oninput="updatePreview()"></div>
     <div class="form-group mb-0"><label>End Time (שעת יציאה)</label><input type="time" id="lEnd" value="18:00" oninput="updatePreview()"></div>
   </div>
-  <div class="form-group mb-0"><label>Break (minutes) — הפסקה</label><input type="number" id="lBreak" min="0" max="120" value="45" oninput="updatePreview()"></div>
+  <div class="form-group mb-0"><label>Break (minutes) — הפסקה <span style="color:var(--muted);font-weight:400">(45 min for shifts ≥6h, per contract)</span></label><input type="number" id="lBreak" min="0" max="120" value="45" oninput="updatePreview()"></div>
   <div id="preview" class="alert alert-info mt-8 mb-0" style="padding:10px 14px;font-size:13px"></div>
 </div>
 
@@ -633,9 +633,13 @@ function updatePreview(){
   const el=document.getElementById('preview');if(!el)return;
   const s=document.getElementById('lStart')?.value;
   const e=document.getElementById('lEnd')?.value;
-  const b=+(document.getElementById('lBreak')?.value||0);
+  const brkEl=document.getElementById('lBreak');
+  const b=+(brkEl?.value||0);
   const tp=document.getElementById('lType')?.value||'regular';
   if(!s||!e||tp==='sick'||tp==='vacation')return;
+  // Auto-suggest 45min break for shifts ≥6h (per employment contract)
+  const rawH=(t2m(e)<=t2m(s)?t2m(e)+1440:t2m(e)-t2m(s))/60;
+  if(brkEl&&rawH>=6&&b===0)brkEl.value=45;
   const wh=workedHours(s,e,b);
   const norm=D.settings.dailyNormHours;
   let desc=`<b>${fmtH(wh)}h worked</b> — `;
@@ -752,6 +756,12 @@ function renderSettings(){
   document.getElementById('pageContent').innerHTML=`
 <h2 class="section-title" style="margin-bottom:20px">Settings ⚙️</h2>
 
+<div class="alert alert-info mb-16">
+  <span>📄</span>
+  <span><b>Contract reference (אלוניאל בע"מ / McDonald's)</b><br>
+  Hourly rate: ₪34 · Daily norm: 8h · Weekly: 40h · Break 45m for ≥6h shifts · Pension: 6% employee / 6.5%+6% employer</span>
+</div>
+
 <div class="settings-group">
   <div class="settings-group-title">👤 Employee</div>
   <div class="form-group"><label>Name</label><input type="text" id="sName" value="${s.employeeName||''}"></div>
@@ -828,8 +838,8 @@ function saveSettings(){
   const s=D.settings;
   s.employeeName=document.getElementById('sName').value;
   s.hourlyRate=+document.getElementById('sRate').value||34;
-  s.dailyNormHours=+document.getElementById('sDNorm').value||9;
-  s.weeklyNormHours=+document.getElementById('sWNorm').value||43;
+  s.dailyNormHours=+document.getElementById('sDNorm').value||8;
+  s.weeklyNormHours=+document.getElementById('sWNorm').value||40;
   s.fixedMonthlySupplements=+document.getElementById('sFixed').value||0;
   s.travelPerDay=+document.getElementById('sTravel').value||0;
   s.mealBenefitEnabled=document.getElementById('sMealOn').checked;
